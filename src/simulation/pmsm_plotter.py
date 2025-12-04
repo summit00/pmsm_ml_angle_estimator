@@ -10,8 +10,8 @@ def plot_pmsm_results(df: pd.DataFrame):
 
     # currents
     plt.subplot(4, 1, 1)
-    plt.plot(t, df["i_d"], label="i_d")
-    plt.plot(t, df["i_q"], label="i_q")
+    plt.plot(t, df["i_d_meas"], label="i_d_meas")
+    plt.plot(t, df["i_q_meas"], label="i_q_meas")
     if "i_q_ref" in df.columns:
         plt.plot(t, df["i_q_ref"], "--", label="i_q_ref")
     plt.ylabel("Current [A]")
@@ -21,6 +21,7 @@ def plot_pmsm_results(df: pd.DataFrame):
     # speed
     plt.subplot(4, 1, 2)
     plt.plot(t, df["omega_m"], label="omega_m")
+    plt.plot(t, df["omega_m_meas"], label="omega_m_meas")
     if "omega_ref" in df.columns and df["omega_ref"].notna().any():
         plt.plot(t, df["omega_ref"], "--", label="omega_ref")
     plt.ylabel("Speed [rad/s]")

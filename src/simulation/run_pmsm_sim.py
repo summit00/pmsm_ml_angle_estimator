@@ -2,42 +2,44 @@
 from pmsm_plant import PmsmPlant
 from foc_controller import FocCurrentController
 from speed_controller import SpeedController
-from load_profiles import step_load
 from pmsm_simulator import PmsmFocSimulator
 from pmsm_plotter import plot_pmsm_results
 import numpy as np
 import time
-
-
-def iq_ref_profile(t: float) -> float:
-    # if t < 0.05:
-    #     return 1.0
-    # elif t < 0.40:
-    #     return 5.0
-    # elif t < 0.80:
-    #     return 3.0
-    # else:
-    return 0.0
-        # Updated to clarify the transition to omega phase
-        # The iq_ref_profile will now stop at 0.40s and omega_ref_profile will take over.
+import pandas as pd
 
 
 def omega_ref_profile(t: float) -> float:
-    if t < 0.20:
-        return 10.0
-    elif t < 0.40:
-        return 50.0
-    elif t < 0.80:
-        return 100.0
-    elif t < 1.00:
-        return 50.0
+    if t < 1.50:
+        return 500*(np.pi/30)
+    # elif t < 0.80:
+    #     return 1000.0*(np.pi/30)
+    # elif t < 1.20:
+    #     return 1000.0*(np.pi/30)
+    # elif t < 1.60:
+    #     return 2000.0*(np.pi/30)
+    # elif t < 2.0:
+    #     return 4000.0*(np.pi/30)
     else:
         return 0.0
-        # Updated to clarify that omega_ref_profile is only active after 0.40s
+
+def load_torque_profile(t: float) -> float:
+    if t < 0.10:
+        return 0.001
+    elif t < 0.20:
+        return 0.005
+    elif t < 0.30:
+        return 0.008
+    elif t < 0.40:
+        return 0.01
+    elif t < 0.50:
+        return 0.03
+    else:
+        return 0.05
 
 
 def main():
-    t_final = 1.5  # extended to fit all steps
+    t_final = 1.5
     dt_sim=1e-6
     dt_current=5e-5
     dt_speed=2.5e-4
@@ -51,8 +53,6 @@ def main():
     J = 0.0000075
     B = 0
 
-    # define load torque profile
-    load_func = step_load(T_low=0.0, T_high=0.0, t_step=0.15)
 
     # Plant
     plant = PmsmPlant(
@@ -63,14 +63,14 @@ def main():
         p=p,
         J=J,
         B=B,
-        load_torque_func=load_func,
+        load_torque_func=load_torque_profile,
     )
 
     # Speed controller (PI)
     speed_ctrl = SpeedController(
         dt=dt_speed,
-        kp_w=0.02,
-        ki_w=0.075,
+        kp_w=0.15,
+        ki_w=0.5,
         iq_limit=5.0,
     )
 
@@ -88,12 +88,12 @@ def main():
         v_limit=24.0,
     )
 
-        # --- Single simulation: iq steps, stop, then omega steps ---
+    # Simulator
     sim = PmsmFocSimulator(
             plant=plant,
             current_controller=foc,
             t_final=t_final,
-            iq_ref_func=iq_ref_profile,
+            iq_ref_func=lambda t: 0.0,
             id_ref_func=lambda t: 0.0,
             omega_ref_func=omega_ref_profile,
             speed_controller=speed_ctrl,
@@ -106,8 +106,9 @@ def main():
     end = time.perf_counter()
     print(f"Simulation time: {end - start:.3f} s")
     print("Data Collected: ", len(df), "rows")
+    #df.to_csv("data/raw/pmsm_foc_simulation.csv")
     print(df.head())
-    plot_pmsm_results(df.iloc[::10])  # plot every 10th sample
+    plot_pmsm_results(df.iloc[::2])  
 
 
 if __name__ == "__main__":

@@ -6,7 +6,8 @@ from pmsm_plant import PmsmPlant
 from foc_controller import FocCurrentController
 from speed_controller import SpeedController
 from typing import Optional, Callable
-
+from sensor_noise import add_current_noise, speed_quantization
+from ramp_gen import SimpleRamp
 
 class PmsmFocSimulator:
     """
@@ -28,8 +29,8 @@ class PmsmFocSimulator:
         speed_controller: Optional[SpeedController] = None,
         x0=None,
         dt_sim: float = 1e-5,
-        dt_current: float = 1e-4,
-        dt_speed: float = 1e-3,
+        dt_current: float = 5e-5,
+        dt_speed: float = 5e-4,
     ):
         self.plant = plant
         self.current_controller = current_controller
@@ -47,6 +48,8 @@ class PmsmFocSimulator:
             self.x0 = np.array([0.0, 0.0, 0.0])
         else:
             self.x0 = np.array(x0, dtype=float)
+
+        
             
 
     def run(self) -> pd.DataFrame:
@@ -76,6 +79,7 @@ class PmsmFocSimulator:
             i_d, i_q, omega_m = x
             omega_e = self.plant.p * omega_m
 
+
             # Speed controller update
             if self.speed_controller is not None and (t - last_speed_update) >= dt_speed - 1e-12:
                 omega_ref = self.omega_ref_func(t) if self.omega_ref_func is not None else 0.0
@@ -102,6 +106,12 @@ class PmsmFocSimulator:
             x = x + dxdt * dt_sim
 
             out = self.plant.output(t, x)
+
+            # Add noisy measurements
+            out["i_d_meas"] = add_current_noise(out["i_d"])
+            out["i_q_meas"] = add_current_noise(out["i_q"])
+            out["omega_m_meas"] = speed_quantization (out["omega_m"], 65536, dt_current)
+
             out.update({
                 "t": t,
                 "i_d_ref": self.id_ref_func(t),
