@@ -39,7 +39,7 @@ def load_torque_profile(t: float) -> float:
 
 
 def main():
-    t_final = 1.5
+    t_final = 0.5
     dt_sim=1e-6
     dt_current=5e-5
     dt_speed=2.5e-4
@@ -52,7 +52,6 @@ def main():
     p = 3
     J = 0.0000075
     B = 0
-
 
     # Plant
     plant = PmsmPlant(
@@ -69,8 +68,8 @@ def main():
     # Speed controller (PI)
     speed_ctrl = SpeedController(
         dt=dt_speed,
-        kp_w=0.15,
-        ki_w=0.5,
+        kp_w=0.4,
+        ki_w=1,
         iq_limit=5.0,
     )
 
@@ -92,14 +91,13 @@ def main():
     sim = PmsmFocSimulator(
             plant=plant,
             current_controller=foc,
-            t_final=t_final,
-            iq_ref_func=lambda t: 0.0,
-            id_ref_func=lambda t: 0.0,
-            omega_ref_func=omega_ref_profile,
             speed_controller=speed_ctrl,
+            t_final=t_final,
+            omega_ref_func=omega_ref_profile,
             dt_sim=dt_sim,
             dt_current=dt_current,
             dt_speed=dt_speed,
+            ramp_rate=50000.0*(np.pi/30),
     )
     start = time.perf_counter()
     df = sim.run()

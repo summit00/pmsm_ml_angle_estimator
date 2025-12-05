@@ -12,25 +12,20 @@ from ramp_gen import SimpleRamp
 class PmsmFocSimulator:
     """
     PMSM + FOC simulator.
-
-    Can run:
-      - speed control (omega_ref_func + SpeedController)
     """
 
     def __init__(
         self,
         plant: PmsmPlant,
         current_controller: FocCurrentController,
+        speed_controller: SpeedController,
         t_final: float = 0.5,
-        # reference profiles:
-        iq_ref_func: Optional[Callable[[float], float]] = None,     # used if no speed_ctrl
-        id_ref_func: Optional[Callable[[float], float]] = None,
-        omega_ref_func: Optional[Callable[[float], float]] = None,  # used if speed_ctrl
-        speed_controller: Optional[SpeedController] = None,
+        omega_ref_func: Optional[Callable[[float], float]] = None,
         x0=None,
         dt_sim: float = 1e-5,
         dt_current: float = 5e-5,
         dt_speed: float = 5e-4,
+        ramp_rate: float = 1000.0,
     ):
         self.plant = plant
         self.current_controller = current_controller
@@ -39,10 +34,8 @@ class PmsmFocSimulator:
         self.dt_current = dt_current
         self.dt_speed = dt_speed
         self.t_final = t_final
-
-        self.iq_ref_func = iq_ref_func
-        self.id_ref_func = id_ref_func or (lambda t: 0.0)
         self.omega_ref_func = omega_ref_func
+        self.ramp_rate = ramp_rate
 
         if x0 is None:
             self.x0 = np.array([0.0, 0.0, 0.0])
@@ -74,6 +67,12 @@ class PmsmFocSimulator:
         last_current_update = -dt_current
         last_speed_update = -dt_speed
 
+        ramp = SimpleRamp(
+            ramp_rate=self.ramp_rate,
+            dt=dt_speed, 
+            start=0.0
+        )
+
         for k in range(n_steps):
             t = k * dt_sim
             i_d, i_q, omega_m = x
@@ -82,17 +81,16 @@ class PmsmFocSimulator:
 
             # Speed controller update
             if self.speed_controller is not None and (t - last_speed_update) >= dt_speed - 1e-12:
-                omega_ref = self.omega_ref_func(t) if self.omega_ref_func is not None else 0.0
-                iq_ref = self.speed_controller.step(omega_ref, omega_m)
+                raw_omega_ref = self.omega_ref_func(t)
+                ramp.set_target(raw_omega_ref)
+                omega_ref_ramped = ramp.update()
+                iq_ref = self.speed_controller.step(omega_ref_ramped, omega_m)
+                #omega_ref = self.omega_ref_func(t)
+                #iq_ref = self.speed_controller.step(omega_ref, omega_m)
                 last_speed_update = t
             # Current controller update
             if (t - last_current_update) >= dt_current - 1e-12:
-                if self.speed_controller is not None:
-                    # Use iq_ref from speed controller
-                    pass
-                else:
-                    iq_ref = self.iq_ref_func(t) if self.iq_ref_func is not None else 0.0
-                id_ref = self.id_ref_func(t)
+                id_ref = 0.0  # always zero d-axis current reference.
                 v_d, v_q = self.current_controller.step(
                     i_d_ref=id_ref,
                     i_q_ref=iq_ref,
@@ -114,11 +112,11 @@ class PmsmFocSimulator:
 
             out.update({
                 "t": t,
-                "i_d_ref": self.id_ref_func(t),
+                "i_d_ref": 0.0,
                 "i_q_ref": iq_ref,
                 "v_d": v_d,
                 "v_q": v_q,
-                "omega_ref": omega_ref if self.speed_controller is not None else None,
+                "omega_ref": omega_ref_ramped,
             })
             logs.append(out)
 

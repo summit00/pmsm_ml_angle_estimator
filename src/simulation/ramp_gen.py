@@ -1,4 +1,6 @@
 # simple_ramp.py
+import numpy as np
+
 class SimpleRamp:
     """Minimal ramp generator for smooth transitions."""
     

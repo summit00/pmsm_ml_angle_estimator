@@ -22,8 +22,7 @@ def plot_pmsm_results(df: pd.DataFrame):
     plt.subplot(4, 1, 2)
     plt.plot(t, df["omega_m"], label="omega_m")
     plt.plot(t, df["omega_m_meas"], label="omega_m_meas")
-    if "omega_ref" in df.columns and df["omega_ref"].notna().any():
-        plt.plot(t, df["omega_ref"], "--", label="omega_ref")
+    plt.plot(t, df["omega_ref"], "--", label="omega_ref")
     plt.ylabel("Speed [rad/s]")
     plt.legend()
     plt.grid(True)
