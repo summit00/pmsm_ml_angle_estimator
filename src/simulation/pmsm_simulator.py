@@ -6,7 +6,7 @@ from pmsm_plant import PmsmPlant
 from foc_controller import FocCurrentController
 from speed_controller import SpeedController
 from typing import Optional, Callable
-from sensor_noise import add_current_noise, speed_quantization
+from sensor_noise import add_current_noise, quantize_speed_with_encoder
 from ramp_gen import SimpleRamp
 
 class PmsmFocSimulator:
@@ -38,7 +38,7 @@ class PmsmFocSimulator:
         self.ramp_rate = ramp_rate
 
         if x0 is None:
-            self.x0 = np.array([0.0, 0.0, 0.0])
+            self.x0 = np.array([0.0, 0.0, 0.0, 0.0])
         else:
             self.x0 = np.array(x0, dtype=float)
 
@@ -60,7 +60,6 @@ class PmsmFocSimulator:
 
         # Initialize controller states
         iq_ref = 0.0
-        omega_ref = 0.0
         v_d, v_q = 0.0, 0.0
 
         # Track last update times
@@ -75,7 +74,7 @@ class PmsmFocSimulator:
 
         for k in range(n_steps):
             t = k * dt_sim
-            i_d, i_q, omega_m = x
+            i_d, i_q, theta_m, omega_m = x
             omega_e = self.plant.p * omega_m
 
 
@@ -108,7 +107,7 @@ class PmsmFocSimulator:
             # Add noisy measurements
             out["i_d_meas"] = add_current_noise(out["i_d"])
             out["i_q_meas"] = add_current_noise(out["i_q"])
-            out["omega_m_meas"] = speed_quantization (out["omega_m"], 65536, dt_current)
+            out["omega_m_meas"] = quantize_speed_with_encoder (out["omega_m"], 4096*4, dt_sim)
 
             out.update({
                 "t": t,

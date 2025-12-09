@@ -58,13 +58,13 @@ class PmsmPlant:
         
         Args:
             t: Current time [s]
-            x: State vector [i_d, i_q, omega_m]
+            x: State vector [i_d, i_q, theta_m, omega_m]
             u: Input vector [v_d, v_q]
             
         Returns:
             dx/dt: Derivative of state vector
         """
-        i_d, i_q, omega_m= x
+        i_d, i_q, theta_m, omega_m= x
         v_d, v_q = u
 
         # electrical speed [rad/s]
@@ -74,6 +74,8 @@ class PmsmPlant:
         di_d_dt = (v_d - self.Rs * i_d + omega_e * self.Lq * i_q) / self.Ld
         di_q_dt = (v_q - self.Rs * i_q - omega_e * self.Ld * i_d - omega_e * self.psi_f) / self.Lq
 
+        dtheta_m_dt = omega_m
+
         # electromagnetic torque
         torque_e = 1.5 * self.p * (self.psi_f * i_q + (self.Ld - self.Lq) * i_d * i_q)
 
@@ -82,7 +84,7 @@ class PmsmPlant:
         domega_m_dt = (torque_e - torque_load - self.B * omega_m) / self.J
 
         # Return state derivatives
-        return np.array([di_d_dt, di_q_dt, domega_m_dt])
+        return np.array([di_d_dt, di_q_dt, dtheta_m_dt, domega_m_dt])
 
     def output(self, t, x):
         """
@@ -96,7 +98,11 @@ class PmsmPlant:
             Dictionary containing all calculated outputs
         """
         # Unpack states
-        i_d, i_q, omega_m = x
+        i_d, i_q, theta_m, omega_m = x
+        
+        # Wrap angle to [0, 2π] for easier interpretation
+        theta_wrapped = theta_m % (2 * np.pi)
+        theta_e = (theta_wrapped * self.p) % (2 * np.pi)
         
         # Calculate derived quantities
         omega_e = self.p * omega_m  # Electrical speed [rad/s]
@@ -113,6 +119,8 @@ class PmsmPlant:
         return {
             "i_d": i_d,           # d-axis current [A]
             "i_q": i_q,           # q-axis current [A]
+            "theta_m": theta_wrapped,   # Mechanical angle [rad], wrapped 0-2π
+            "theta_e": theta_e,   # Electrical angle [rad], wrapped 0-2π
             "omega_m": omega_m,   # Mechanical speed [rad/s]
             "omega_e": omega_e,   # Electrical speed [rad/s]
             "torque_e": torque_e, # Electromagnetic torque [N·m]

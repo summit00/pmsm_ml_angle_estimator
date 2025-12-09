@@ -10,37 +10,45 @@ import pandas as pd
 
 
 def omega_ref_profile(t: float) -> float:
-    if t < 1.50:
+    if t < 0.50:
         return 500*(np.pi/30)
-    # elif t < 0.80:
-    #     return 1000.0*(np.pi/30)
-    # elif t < 1.20:
-    #     return 1000.0*(np.pi/30)
-    # elif t < 1.60:
-    #     return 2000.0*(np.pi/30)
-    # elif t < 2.0:
-    #     return 4000.0*(np.pi/30)
+    elif t < 1.0:
+       return 1000.0*(np.pi/30)
+    elif t < 1.50:
+        return 2000.0*(np.pi/30)
+    elif t < 2.0:
+       return 3000.0*(np.pi/30)
+    elif t < 2.5:
+         return 4000.0*(np.pi/30)
     else:
-        return 0.0
-
-def load_torque_profile(t: float) -> float:
-    if t < 0.10:
-        return 0.001
-    elif t < 0.20:
-        return 0.005
-    elif t < 0.30:
-        return 0.008
-    elif t < 0.40:
-        return 0.01
-    elif t < 0.50:
-        return 0.03
-    else:
-        return 0.05
+        return 2000.0*(np.pi/30)
+    
+def generate_random_torque_profile(
+    duration: float = 2.5,
+    switch_interval: float = 0.1,
+    min_torque: float = 0.0,
+    max_torque: float = 0.05,
+    seed: int = 42
+) -> callable:
+    """Generate a random step-changing torque load profile."""
+    np.random.seed(seed)
+    
+    # Pre-generate torque values
+    n_intervals = int(np.ceil(duration / switch_interval))
+    torque_values = np.random.uniform(min_torque, max_torque, n_intervals)
+    
+    def load_func(t: float) -> float:
+        if t < 0 or t >= duration:
+            return 0.0
+        interval_idx = min(int(t / switch_interval), n_intervals - 1)
+        return float(torque_values[interval_idx])
+    
+    return load_func
 
 
 def main():
-    t_final = 0.5
-    dt_sim=1e-6
+    t_final = 3.0
+    dt_sim=5e-5
     dt_current=5e-5
     dt_speed=2.5e-4
 
@@ -53,6 +61,15 @@ def main():
     J = 0.0000075
     B = 0
 
+    random_load = generate_random_torque_profile(
+        duration=t_final,
+        switch_interval=0.15,
+        min_torque=0.0,
+        max_torque=0.2,
+        seed=123  # Change this for different random patterns
+    )
+
+
     # Plant
     plant = PmsmPlant(
         Rs=Rs,
@@ -62,7 +79,8 @@ def main():
         p=p,
         J=J,
         B=B,
-        load_torque_func=load_torque_profile,
+        #load_torque_func=load_torque_profile,
+        load_torque_func=random_load,
     )
 
     # Speed controller (PI)
