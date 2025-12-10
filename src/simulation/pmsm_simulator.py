@@ -8,6 +8,7 @@ from speed_controller import SpeedController
 from typing import Optional, Callable
 from sensor_noise import add_current_noise, quantize_speed_with_encoder
 from ramp_gen import SimpleRamp
+from transform import ClarkeParkTransform
 
 class PmsmFocSimulator:
     """
@@ -61,6 +62,8 @@ class PmsmFocSimulator:
         # Initialize controller states
         iq_ref = 0.0
         v_d, v_q = 0.0, 0.0
+        v_alpha, v_beta = 0.0, 0.0
+        i_alpha, i_beta = 0.0, 0.0
 
         # Track last update times
         last_current_update = -dt_current
@@ -71,6 +74,8 @@ class PmsmFocSimulator:
             dt=dt_speed, 
             start=0.0
         )
+
+        transform = ClarkeParkTransform()
 
         for k in range(n_steps):
             t = k * dt_sim
@@ -83,13 +88,16 @@ class PmsmFocSimulator:
                 raw_omega_ref = self.omega_ref_func(t)
                 ramp.set_target(raw_omega_ref)
                 omega_ref_ramped = ramp.update()
-                iq_ref = self.speed_controller.step(omega_ref_ramped, omega_m)
+                iq_ref = self.speed_controller.step(omega_ref_ramped, omega_e)
                 #omega_ref = self.omega_ref_func(t)
                 #iq_ref = self.speed_controller.step(omega_ref, omega_m)
                 last_speed_update = t
             # Current controller update
             if (t - last_current_update) >= dt_current - 1e-12:
                 id_ref = 0.0  # always zero d-axis current reference.
+                # transform to alpha-beta frame for logging
+                v_alpha, v_beta = transform.inverse_park_transform(v_d, v_q, theta_m * self.plant.p)
+                i_alpha, i_beta = transform.inverse_park_transform(i_d, i_q, theta_m * self.plant.p)
                 v_d, v_q = self.current_controller.step(
                     i_d_ref=id_ref,
                     i_q_ref=iq_ref,
@@ -105,9 +113,9 @@ class PmsmFocSimulator:
             out = self.plant.output(t, x)
 
             # Add noisy measurements
-            out["i_d_meas"] = add_current_noise(out["i_d"])
-            out["i_q_meas"] = add_current_noise(out["i_q"])
-            out["omega_m_meas"] = quantize_speed_with_encoder (out["omega_m"], 4096*4, dt_sim)
+            #out["i_d_meas"] = add_current_noise(out["i_d"])
+            #out["i_q_meas"] = add_current_noise(out["i_q"])
+            #out["omega_e_meas"] = quantize_speed_with_encoder (out["omega_e"], 4096*4, dt_sim)
 
             out.update({
                 "t": t,
@@ -115,6 +123,12 @@ class PmsmFocSimulator:
                 "i_q_ref": iq_ref,
                 "v_d": v_d,
                 "v_q": v_q,
+                "v_alpha": v_alpha,
+                "v_beta": v_beta,
+                "i_alpha": i_alpha,
+                "i_beta": i_beta,
+                "sin_theta_e": np.sin(theta_m * self.plant.p),
+                "cos_theta_e": np.cos(theta_m * self.plant.p),
                 "omega_ref": omega_ref_ramped,
             })
             logs.append(out)

@@ -100,6 +100,9 @@ class PmsmPlant:
         # Unpack states
         i_d, i_q, theta_m, omega_m = x
         
+        # Angle rolling.
+        theta_e_raw = self.p * theta_m
+
         # Wrap angle to [0, 2π] for easier interpretation
         theta_wrapped = theta_m % (2 * np.pi)
         theta_e = (theta_wrapped * self.p) % (2 * np.pi)
@@ -121,6 +124,8 @@ class PmsmPlant:
             "i_q": i_q,           # q-axis current [A]
             "theta_m": theta_wrapped,   # Mechanical angle [rad], wrapped 0-2π
             "theta_e": theta_e,   # Electrical angle [rad], wrapped 0-2π
+            "theta_m_raw": theta_m, # Mechanical angle [rad], raw
+            "theta_e_raw": theta_e_raw, # Electrical angle [rad], raw
             "omega_m": omega_m,   # Mechanical speed [rad/s]
             "omega_e": omega_e,   # Electrical speed [rad/s]
             "torque_e": torque_e, # Electromagnetic torque [N·m]

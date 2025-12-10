@@ -7,21 +7,8 @@ from pmsm_plotter import plot_pmsm_results
 import numpy as np
 import time
 import pandas as pd
+from transform import ClarkeParkTransform
 
-
-def omega_ref_profile(t: float) -> float:
-    if t < 0.50:
-        return 500*(np.pi/30)
-    elif t < 1.0:
-       return 1000.0*(np.pi/30)
-    elif t < 1.50:
-        return 2000.0*(np.pi/30)
-    elif t < 2.0:
-       return 3000.0*(np.pi/30)
-    elif t < 2.5:
-         return 4000.0*(np.pi/30)
-    else:
-        return 2000.0*(np.pi/30)
     
 def generate_random_torque_profile(
     duration: float = 2.5,
@@ -38,16 +25,44 @@ def generate_random_torque_profile(
     torque_values = np.random.uniform(min_torque, max_torque, n_intervals)
     
     def load_func(t: float) -> float:
-        if t < 0 or t >= duration:
+        if t < 0.1 or t >= duration:
             return 0.0
         interval_idx = min(int(t / switch_interval), n_intervals - 1)
         return float(torque_values[interval_idx])
     
     return load_func
 
+def generate_random_speed_profile(
+    duration: float = 2.5,
+    switch_interval: float = 0.4,
+    min_rpm: float = 500.0,
+    max_rpm: float = 4000.0,
+    seed: int = 42
+) -> callable:
+    """Generate a random step-changing speed reference profile in rad/s."""
+    np.random.seed(seed)
+    
+    # Pre-generate RPM values
+    n_intervals = int(np.ceil(duration / switch_interval))
+    rpm_values = np.random.uniform(min_rpm, max_rpm, n_intervals)
+    
+    # Generate final RPM value (for t >= duration)
+    final_rpm = np.random.uniform(min_rpm, max_rpm)
+    
+    def omega_ref_profile(t: float) -> float:
+        if t < 0.0:
+            return rpm_values[0] * (np.pi / 30)
+        elif t >= duration:
+            return final_rpm * (np.pi / 30)
+        
+        interval_idx = min(int(t / switch_interval), n_intervals - 1)
+        return float(rpm_values[interval_idx]) * (np.pi / 30)
+    
+    return omega_ref_profile
+
 
 def main():
-    t_final = 3.0
+    t_final = 30.0
     dt_sim=5e-5
     dt_current=5e-5
     dt_speed=2.5e-4
@@ -69,8 +84,15 @@ def main():
         seed=123  # Change this for different random patterns
     )
 
+    random_speed =generate_random_speed_profile(
+        duration=t_final,
+        switch_interval=0.5,
+        min_rpm=150.0,
+        max_rpm=12000.0,
+    )
 
-    # Plant
+
+    # Plant - note: initial state now includes angle [i_d, i_q, theta_m, omega_m]
     plant = PmsmPlant(
         Rs=Rs,
         Ld=Ld,
@@ -79,15 +101,14 @@ def main():
         p=p,
         J=J,
         B=B,
-        #load_torque_func=load_torque_profile,
         load_torque_func=random_load,
     )
 
     # Speed controller (PI)
     speed_ctrl = SpeedController(
         dt=dt_speed,
-        kp_w=0.4,
-        ki_w=1,
+        kp_w=0.15,
+        ki_w=0.3,
         iq_limit=5.0,
     )
 
@@ -111,21 +132,60 @@ def main():
             current_controller=foc,
             speed_controller=speed_ctrl,
             t_final=t_final,
-            omega_ref_func=omega_ref_profile,
+            #omega_ref_func=omega_ref_profile,
+            omega_ref_func=random_speed,
             dt_sim=dt_sim,
             dt_current=dt_current,
             dt_speed=dt_speed,
-            ramp_rate=50000.0*(np.pi/30),
+            ramp_rate=100000.0*(np.pi/30),
     )
     start = time.perf_counter()
     df = sim.run()
     end = time.perf_counter()
     print(f"Simulation time: {end - start:.3f} s")
     print("Data Collected: ", len(df), "rows")
-    #df.to_csv("data/raw/pmsm_foc_simulation.csv")
-    print(df.head())
-    plot_pmsm_results(df.iloc[::2])  
+    
 
+    # Create ML-ready dataset for angle estimation
+    # Features: everything we can measure (noisy/quantized)
+    # Target: true rotor angle
+    ml_df = pd.DataFrame({
+        
+        #'i_d_meas': df['i_d_meas'],
+        #'i_q_meas': df['i_q_meas'],
+        'i_d': df['i_d'],
+        'i_q': df['i_q'],
+        'i_alpha': df['i_alpha'],
+        'i_beta': df['i_beta'],
+        'v_d': df['v_d'],
+        'v_q': df['v_q'],
+        'v_alpha': df['v_alpha'],
+        'v_beta': df['v_beta'],
+        
+        'sin_theta_e': df['sin_theta_e'],
+        'cos_theta_e': df['cos_theta_e'],
+        'omega_e': df['omega_e'],      # True mechanical speed
+        'theta_m': df['theta_m'],        # True mechanical angle [wrapped]
+        'theta_e': df['theta_e'],        # True electrical angle [wrapped]
+        'theta_m_raw': df['theta_m_raw'],# True mechanical angle (raw)
+        'theta_e_raw': df['theta_e_raw'],# True electrical angle (raw)
+        
+        
+        'time': df['t'],
+        'omega_m': df['omega_m'],      # True mechanical speed
+        'omega_ref': df['omega_ref'],
+        'torque_e': df['torque_e'],
+        'torque_load': df['torque_load'],
+        'i_q_ref': df['i_q_ref'],
+        'i_d_ref': df['i_d_ref'],
+    })
+    
+    # Save ML dataset
+    ml_df.to_csv("data/raw/angle_estimation_dataset.csv", index=False)
+
+
+    # Plot results
+    plot_pmsm_results(df.iloc[::5])
 
 if __name__ == "__main__":
     main()
