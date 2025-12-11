@@ -62,20 +62,21 @@ def generate_random_speed_profile(
     return omega_ref_profile
 
 
-def main():
+def main() -> None:
+    """Main sim function."""
     t_final = 30.0
     dt_sim = 5e-5
     dt_current = 5e-5
     dt_speed = 2.5e-4
 
     # Motor & FOC parameters (shared for plant + controller)
-    Rs = 0.315
-    Ld = 3e-4
-    Lq = 2.8e-4
+    r_s = 0.315
+    l_d = 3e-4
+    l_q = 2.8e-4
     psi_f = 0.0107
     p = 3
-    J = 0.0000075
-    B = 0
+    j = 0.0000075
+    b = 0
 
     random_load = generate_random_torque_profile(
         duration=t_final,
@@ -94,13 +95,13 @@ def main():
 
     # Plant - note: initial state now includes angle [i_d, i_q, theta_m, omega_m]
     plant = PmsmPlant(
-        Rs=Rs,
-        Ld=Ld,
-        Lq=Lq,
+        r_s=r_s,
+        l_d=l_d,
+        l_q=l_q,
         psi_f=psi_f,
         p=p,
-        J=J,
-        B=B,
+        j=j,
+        b=b,
         load_torque_func=random_load,
     )
 
@@ -119,8 +120,8 @@ def main():
         ki_d=300,
         kp_q=0.4,
         ki_q=300,
-        Ld=Ld,
-        Lq=Lq,
+        l_d=l_d,
+        l_q=l_q,
         psi_f=psi_f,
         p=p,
         v_limit=24.0,

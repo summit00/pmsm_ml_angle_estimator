@@ -1,4 +1,5 @@
 """FOC current controller in dq frame with decoupling."""
+
 import numpy as np
 from pidController import PIDController
 
@@ -10,8 +11,8 @@ class FocCurrentController:
       - i_q_ref (from torque or speed loop)
 
     Uses two PI loops, plus dq decoupling feedforward:
-        v_d = v_d_PI - omega_e * Lq * i_q
-        v_q = v_q_PI + omega_e * Ld * i_d + omega_e * psi_f
+        v_d = v_d_PI - omega_e * l_q * i_q
+        v_q = v_q_PI + omega_e * l_d * i_d + omega_e * psi_f
     """
 
     def __init__(
@@ -23,8 +24,8 @@ class FocCurrentController:
         kp_q: float = 5.0,
         ki_q: float = 1000.0,
         # machine params for decoupling:
-        Ld: float = 1e-3,
-        Lq: float = 1.2e-3,
+        l_d: float = 1e-3,
+        l_q: float = 1.2e-3,
         psi_f: float = 0.05,
         p: int = 3,
         # voltage limit:
@@ -35,8 +36,8 @@ class FocCurrentController:
         self.v_limit = v_limit
 
         # motor params
-        self.Ld = Ld
-        self.Lq = Lq
+        self.l_d = l_d
+        self.l_q = l_q
         self.psi_f = psi_f
         self.p = p  # not strictly needed here, but handy if extended later
 
@@ -49,14 +50,17 @@ class FocCurrentController:
 
     def get_params(self):
         """Return gains as a flat numpy array [kp_d, ki_d, kp_q, ki_q]."""
-        return np.array([
-            self.pid_d.kp,
-            self.pid_d.ki,
-            self.pid_q.kp,
-            self.pid_q.ki,
-        ], dtype=float)
+        return np.array(
+            [
+                self.pid_d.kp,
+                self.pid_d.ki,
+                self.pid_q.kp,
+                self.pid_q.ki,
+            ],
+            dtype=float,
+        )
 
-    def set_params(self, theta):
+    def set_params(self, theta) -> None:
         """Set gains from a flat array [kp_d, ki_d, kp_q, ki_q]."""
         theta = np.asarray(theta, dtype=float)
         self.pid_d.kp = theta[0]
@@ -64,7 +68,7 @@ class FocCurrentController:
         self.pid_q.kp = theta[2]
         self.pid_q.ki = theta[3]
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset internal states of the controller."""
         self.pid_d.reset()
         self.pid_q.reset()
@@ -76,7 +80,7 @@ class FocCurrentController:
         i_d_meas: float,
         i_q_meas: float,
         omega_e: float,
-    ):
+    ) -> tuple[float, float]:
         """
         Compute v_d, v_q from current references and measurements, with decoupling.
 
@@ -92,8 +96,8 @@ class FocCurrentController:
         v_q_pi = self.pid_q.update(i_q_ref, i_q_meas)
 
         # decoupling feedforward terms
-        v_d_dec = - omega_e * self.Lq * i_q_meas
-        v_q_dec = + omega_e * self.Ld * i_d_meas + omega_e * self.psi_f
+        v_d_dec = -omega_e * self.l_q * i_q_meas
+        v_q_dec = +omega_e * self.l_d * i_d_meas + omega_e * self.psi_f
 
         # sum PI + decoupling
         v_d = v_d_pi + v_d_dec

@@ -1,9 +1,10 @@
 """Plot pmsm simulation results."""
+
 import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def plot_pmsm_results(df: pd.DataFrame):
+def plot_pmsm_results(df: pd.DataFrame) -> None:
     """Plot PMSM simulation results from DataFrame."""
     t = df["t"]
 
@@ -11,7 +12,7 @@ def plot_pmsm_results(df: pd.DataFrame):
 
     # currents
     ax1 = plt.subplot(6, 1, 1)
-    #ax1.plot(t, df["i_d_meas"], label="i_d_meas")
+    # ax1.plot(t, df["i_d_meas"], label="i_d_meas")
     ax1.plot(t, df["i_d"], label="i_d")
     ax1.plot(t, df["i_q"], label="i_q")
     if "i_q_ref" in df.columns:
@@ -23,7 +24,7 @@ def plot_pmsm_results(df: pd.DataFrame):
     # speed
     ax2 = plt.subplot(6, 1, 2)
     ax2.plot(t, df["omega_e"], label="omega_e (true)")
-    #ax2.plot(t, df["omega_e_meas"], label="omega_e (meas)")
+    # ax2.plot(t, df["omega_e_meas"], label="omega_e (meas)")
     ax2.plot(t, df["omega_ref"], "--", label="omega_ref")
     ax2.set_ylabel("Speed [rad/s]")
     ax2.legend()
