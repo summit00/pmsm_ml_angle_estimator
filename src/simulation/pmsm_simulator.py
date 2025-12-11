@@ -6,7 +6,7 @@ from pmsm_plant import PmsmPlant
 from foc_controller import FocCurrentController
 from speed_controller import SpeedController
 from typing import Optional, Callable
-from sensor_noise import add_current_noise, quantize_speed_with_encoder
+from sensors import add_current_noise, quantize_angle
 from ramp_gen import SimpleRamp
 from transform import ClarkeParkTransform
 
@@ -112,10 +112,10 @@ class PmsmFocSimulator:
 
             out = self.plant.output(t, x)
 
-            # Add noisy measurements
-            #out["i_d_meas"] = add_current_noise(out["i_d"])
-            #out["i_q_meas"] = add_current_noise(out["i_q"])
-            #out["omega_e_meas"] = quantize_speed_with_encoder (out["omega_e"], 4096*4, dt_sim)
+            out["i_alpha_meas_12"] = add_current_noise(i_alpha, adc_bits=12)
+            out["i_beta_meas_12"] = add_current_noise(i_beta, adc_bits=12)
+            out["i_alpha_meas_8"] = add_current_noise(i_alpha, adc_bits=8)
+            out["i_beta_meas_8"] = add_current_noise(i_beta, adc_bits=8)
 
             out.update({
                 "t": t,
@@ -129,6 +129,10 @@ class PmsmFocSimulator:
                 "i_beta": i_beta,
                 "sin_theta_e": np.sin(theta_m * self.plant.p),
                 "cos_theta_e": np.cos(theta_m * self.plant.p),
+                "sin_theta_e_12bit": quantize_angle(np.sin(theta_m * self.plant.p), encoder_bits=12),
+                "cos_theta_e_12bit": quantize_angle(np.cos(theta_m * self.plant.p), encoder_bits=12),
+                "sin_theta_e_8bit": quantize_angle(np.sin(theta_m * self.plant.p), encoder_bits=8),
+                "cos_theta_e_8bit": quantize_angle(np.cos(theta_m * self.plant.p), encoder_bits=8),
                 "omega_ref": omega_ref_ramped,
             })
             logs.append(out)

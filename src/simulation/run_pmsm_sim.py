@@ -150,9 +150,7 @@ def main():
     # Features: everything we can measure (noisy/quantized)
     # Target: true rotor angle
     ml_df = pd.DataFrame({
-        
-        #'i_d_meas': df['i_d_meas'],
-        #'i_q_meas': df['i_q_meas'],
+        'time': df['t'],
         'i_d': df['i_d'],
         'i_q': df['i_q'],
         'i_alpha': df['i_alpha'],
@@ -161,23 +159,23 @@ def main():
         'v_q': df['v_q'],
         'v_alpha': df['v_alpha'],
         'v_beta': df['v_beta'],
-        
         'sin_theta_e': df['sin_theta_e'],
         'cos_theta_e': df['cos_theta_e'],
         'omega_e': df['omega_e'],      # True mechanical speed
-        'theta_m': df['theta_m'],        # True mechanical angle [wrapped]
         'theta_e': df['theta_e'],        # True electrical angle [wrapped]
-        'theta_m_raw': df['theta_m_raw'],# True mechanical angle (raw)
-        'theta_e_raw': df['theta_e_raw'],# True electrical angle (raw)
-        
-        
-        'time': df['t'],
-        'omega_m': df['omega_m'],      # True mechanical speed
+        'i_q_ref': df['i_q_ref'],
+        'i_d_ref': df['i_d_ref'],
         'omega_ref': df['omega_ref'],
         'torque_e': df['torque_e'],
         'torque_load': df['torque_load'],
-        'i_q_ref': df['i_q_ref'],
-        'i_d_ref': df['i_d_ref'],
+        'i_alpha_meas_12': df['i_alpha_meas_12'],
+        'i_beta_meas_12': df['i_beta_meas_12'],
+        'i_alpha_meas_8': df['i_alpha_meas_8'],
+        'i_beta_meas_8': df['i_beta_meas_8'],
+        "sin_theta_e_12bit": df["sin_theta_e_12bit"],
+        "cos_theta_e_12bit": df["cos_theta_e_12bit"],
+        "sin_theta_e_8bit": df["sin_theta_e_8bit"],
+        "cos_theta_e_8bit": df["cos_theta_e_8bit"],
     })
     
     # Save ML dataset

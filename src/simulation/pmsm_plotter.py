@@ -31,20 +31,15 @@ def plot_pmsm_results(df: pd.DataFrame):
 
     # angle
     ax3 = plt.subplot(6, 1, 3)
-    if "theta_m" in df.columns:
-        ax3.plot(t, df["theta_m"], label="θ_m (mechanical)")
-    if "theta_e" in df.columns:
-        ax3.plot(t, df["theta_e"], label="θ_e (electrical)")
+    ax3.plot(t, df["theta_e"], label="θ_e (electrical)")
     ax3.set_ylabel("Angle [rad]")
     ax3.set_xlabel("Time [s]")
     ax3.legend()
     ax3.grid(True)
 
     ax3 = plt.subplot(6, 1, 4)
-    if "theta_m" in df.columns:
-        ax3.plot(t, df["sin_theta_e"], label="sin theta (electrical)")
-    if "theta_e" in df.columns:
-        ax3.plot(t, df["cos_theta_e"], label="cos theta (electrical)")
+    ax3.plot(t, df["sin_theta_e"], label="sin theta (electrical) true")
+    ax3.plot(t, df["cos_theta_e"], label="cos theta (electrical)")
     ax3.set_ylabel("Angle [rad]")
     ax3.set_xlabel("Time [s]")
     ax3.legend()
