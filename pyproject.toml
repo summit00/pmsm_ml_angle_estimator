@@ -16,186 +16,389 @@ dependencies = [
     "pylint",
     "pytest",
     "jupyter",
+    "pytest-cov",
 ]
 
-# ========== RUFF CONFIG ==========
+[tool.pytest.ini_options]
+# This line tells pytest to add the "src" directory to the Python path
+pythonpath = ["src"]
+
+
+
+################
+### Ruff #######
+################
 [tool.ruff]
-# Industry standard error selection
+line-length = 120
+indent-width = 4
+# Align with your mypy Python version
+target-version = "py312"
+
+
+[tool.ruff.lint]
+# Core rule sets: style, errors, naming, bug risks, imports, etc.
 select = [
     "E",   # pycodestyle errors
-    "F",   # Pyflakes
-    "B",   # flake8-bugbear (security/correctness)
-    "I",   # isort (import sorting)
-    "UP",  # pyupgrade (modern Python)
-    "C9",  # McCabe complexity
-    "N",   # naming conventions
-    "D",   # pydocstyle - ADDED FOR DOCSTRINGS
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "N",   # pep8-naming
+    "B",   # bugbear (code smells, potential bugs)
+    "I",   # import sorting
+    "UP",  # pyupgrade (modern syntax)
+    "SIM", # simplify code
+    "C90", # mccabe complexity (C901)
+    "D",   # pydocstyle (docstring conventions)
+]
+# Nothing globally ignored for now; adjust as needed
+ignore = []
+[tool.ruff.lint.pydocstyle]
+convention = "google"  # or "numpy" or "pep257"
+
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "double"
+line-ending = "lf"
+
+
+######################
+### Build Settings ###
+######################
+# [build-system]
+# requires = ["setuptools>=61.0"]
+# build-backend = "setuptools.build_meta"
+
+# [tool.setuptools.dynamic]
+# version = { attr = "<your_lib_name>.__version__" }
+
+# [tool.setuptools.packages.find]
+# include = ["<your_lib_name>"]
+# exclude = ["reports", "tests", "docs"]
+
+
+##############
+### pylint ###
+##############
+[tool.pylint.main]
+# Python Version
+py-version = "3.12"
+# Execute X jobs in parallel (0=auto detect)
+jobs = 0
+
+[tool.pylint.reports]
+# Generate reports
+reports = false
+# Generate rating score
+score = true
+# Specify output format (options: 'text', 'parseable', 'colorized', 'json')
+output-format = "text"
+
+[tool.pylint.messages_control]
+# Disable the following warnings/errors
+disable = []
+# Specify confidence levels for checks (options: 'HIGH', 'CONTROL_FLOW', 'INFERENCE', 'INFERENCE_FAILURE', 'UNDEFINED')
+confidence = [
+    "HIGH",
+    "CONTROL_FLOW",
+    "INFERENCE",
+    "INFERENCE_FAILURE",
+    "UNDEFINED",
 ]
 
-# Docstring configuration
-[tool.ruff.pydocstyle]
-# Google style docstrings
-convention = "google"
-# Require docstrings for:
-#   - all modules
-#   - all functions
-#   - all classes
-#   - all methods
-#   - __init__ methods
-docstring-convention = "google"
+[tool.pylint.format]
+# Specify maximum number of characters per line
+max-line-length = 120
+# Specify maximum number of lines per module
+max-module-lines = 1000
+# Default indentation
+indent-string = "    " # 4 Spaces
+# Indentation in second line (and onwards) for multiline statements
+indent-after-paren = 4
+# Specify line ending ('LF', 'CRLF', 'CR', '')
+expected-line-ending-format = ""
 
-# Allow legacy/compatibility patterns
-ignore = [
-    "T201",  # print found (allowed in scripts)
-    "C901",  # McCabe complexity - set realistic threshold below
-    "B008",  # Do not perform function calls in argument defaults
-]
+[tool.pylint.basic]
+# Naming conventions (snake_case, camelCase, PascalCase, UPPER_CASE)
+# Class names
+class-naming-style = "PascalCase"
+class-rgx = "[A-Z][a-zA-Z0-9]+$"
+# Class attributes names
+attr-naming-style = "snake_case"
+attr-rgx = "[a-z_][a-z0-9_]{0,}$"
+# Function names
+function-naming-style = "snake_case"
+function-rgx = "[a-z_][a-z0-9_]{2,}$"
+# Variable names
+variable-naming-style = "snake_case"
+variable-rgx = "[a-z_][a-z0-9_]{0,}$"
+# Constant names
+const-naming-style = "UPPER_CASE"
+const-rgx = "(([A-Z_][A-Z0-9_]*)|(__.*__))$"
+# Module names
+module-naming-style = "snake_case"
+module-rgx = "[a-z_][a-z0-9_]*$"
+# Method names
+method-naming-style = "snake_case"
+method-rgx = "[a-z_][a-z0-9_]{2,}$"
+# Argument names
+argument-naming-style = "snake_case"
+argument-rgx = "[a-z_][a-z0-9_]{0,}$"
 
-# Auto-fix everything fixable
-fixable = ["ALL"]
+# Good variable names (Exceptions from defined rules)
+good-names = ["i", "j"]
+# Bad variable names (Always prevent regardless of defined rules)
+bad-names = []
 
-# Industry standard line length
-line-length = 120
+# Docstring min length
+docstring-min-length = 10
+# Docstring max length
+#docstring-max-length = 10
 
-# Standard exclusions
-exclude = [
-    ".git",
-    ".venv",
-    "__pycache__",
-    "*.pyc",
-    "build",
-    "dist",
-]
+[tool.pylint.design]
+# Maximum number of allowed arguments passed with a function
+max-args = 15
+# Maximum number of allowed positional arguments passed with a function
+max-positional-arguments = 15
+# Maximum number of allowed attributes per class
+max-attributes = 15
+# Maximum number of allowed branches in if/elif/else statements
+max-branches = 15
+# Maximum number of allowed local variables in a function
+max-locals = 30
+# Maximum number of allowed return statements in a function
+max-returns = 6
+# Maximum number of allowed statements in a function
+max-statements = 50
+# Minimum number of public methods in a class
+min-public-methods = 1
+# Maximum number of public methods in a class
+max-public-methods = 20
+# Maximum number of parents (for inheritance)
+max-parents = 7
+# Maximum number of boolean expressions
+max-bool-expr = 5
 
-# Maximum cyclomatic complexity (industry standard: 10-15)
-max-complexity = 12
+[tool.pylint.variables]
+# Define callback prefixes and make exceptions when appearing as unused arguments
+callbacks = ["on_", "cb_"]
+# Allow exceptions for unused (dummy) variables that match the following regex
+dummy-variables-rgx = "_"
+# Allow redefinition of Python builtin names (id, type, etc.)
+allowed-redefined-builtins = []
+# Warn if unused imports appear in __init__.py (commonly used for public APIs)
+init-import = false
 
-# ========== IMPORT SORTING ==========
-[tool.ruff.isort]
-known-first-party = ["src"]
-lines-between-types = 1
-combine-as-imports = true
-force-sort-within-sections = true
+[tool.pylint.imports]
+# Allow the usage of deprecated modules
+deprecated-modules = []
+# Create a graph for all import
+import-graph = false
+# Create a graph for external import
+ext-import-graph = false
+# Create a graph for internal import
+int-import-graph = false
+# Allow imports on different packet levels (e.g., prevent circular imports)
+allow-any-import-level = false
 
-# ========== PER-FILE RULES ==========
-[tool.ruff.per-file-ignores]
-# Allow unused imports in __init__.py
-"__init__.py" = ["F401"]
+[tool.pylint.classes]
+# Specify valid names for the first argument in metaclass methods
+valid-metaclass-classmethod-first-arg = ["cls", "mcs"]
+# Specify in which class methods we can define class attributes
+defining-attr-methods = ["__init__", "__new__", "setUp"]
+# Allow accessing protected methods (as indicated by _) for the following exceptions
+exclude-protected = ["_asdict", "_fields", "_replace", "_source", "_make"]
 
-# Test-specific allowances
-"tests/*" = [
-    "S101",      # Use of assert (OK in tests)
-    "PLR2004",   # Magic values (OK in test data)
-    "ARG005",    # Unused arguments in test fixtures
-]
+[tool.pylint.exceptions]
+# List of exceptions that are too general to catch
+overgeneral-exceptions = ["builtins.BaseException", "builtins.Exception"]
 
-# Notebooks get more flexibility
-"notebooks/*.py" = ["E402"]  # Imports not at top
+[tool.pylint.logging]
+# Define which modules are treated als logging modules (some special rules apply)
+logging-modules = ["logging"]
+# Define the logging style (old, new, fstr); old uses lazy loading with % and is preferred for performance
+logging-format-style = "old"
 
-# ========== MYPY CONFIG ==========
+[tool.pylint.miscellaneous]
+# Keywords that trigger a pylint warning
+notes = ["FIXME", "TODO"]
+
+[tool.pylint.similarities]
+# Minimum number of similar lines to trigger a similarity warning
+min-similarity-lines = 4
+# Ignore comments for similarity checks
+ignore-comments = true
+# Ignore docstrings for similarity checks
+ignore-docstrings = true
+# Ignore imports for similarity checks
+ignore-imports = true
+# Ignore function signatures for similarity checks
+ignore-signatures = true
+
+[tool.pylint.spelling]
+# Enable a spell checker (e.g., en_US; requires pyenchant)
+spelling-dict = ""
+# Specify a custom dictionary that complements the previous dictionary
+spelling-private-dict-file = ""
+# List of exceptions which are ignored for spell checking
+spelling-ignore-words = []
+
+[tool.pylint.typecheck]
+# Specify decorators that modify function argument lists
+signature-mutators = []
+# Specify classes that are ignored for type checks (e.g., because of dynamic attributes)
+ignored-classes = ["optparse.Values", "thread._local", "_thread._local"]
+# Ignore checks for mixins if enabled
+ignore-mixin-members = true
+# Specify modules that are ignored for type checks
+ignored-modules = []
+# Enable hints if member is not recognized (probably typo)
+missing-member-hint = true
+# Defines required similarity to trigger warnings (if too distinct, a hint makes no sense)
+missing-member-hint-distance = 2
+# Defines how many suggestions are given if member is not recognized
+missing-member-max-choices = 1
+
+[tool.pylint.string]
+# Check consistent usage of quotes (either " or ')
+check-quote-consistency = true
+# Check implicit multiline string concatenation without +
+check-str-concat-over-line-jumps = true
+
+[tool.pylint.refactoring]
+# Defines the maximum depth for nested blocks
+max-nested-blocks = 5
+# Specifies a list of exceptions for functions that never return
+never-returning-functions = ["sys.exit", "argparse.parse_error"]
+
+
+############
+### mypy ###
+############
 [tool.mypy]
-python_version = "3.9"
+ignore_missing_imports = true
+disable_error_code = ["import-untyped"]
 
-# Core type safety rules
-warn_return_any = true
+### Basic settings ###
+# ================== #
+
+# Exclude the following files/folders from assessment
+exclude = []
+# Specify target version (to know supported feature set)
+python_version = "3.12"
+# Enable warnings for unused or deprecated options in pyproject.toml
 warn_unused_configs = true
-disallow_incomplete_defs = true
-no_implicit_optional = true
+
+# Warns if equality check includes different data types
+strict_equality = true
+# Warn if unreachable code is detected
+warn_unreachable = true
+# Prevent redefinition of variables
+allow_redefinition = false
+
+# Support namespace packages (packages without __init__.py)
+namespace_packages = true
+# Specify how imported modules are checked (possible options: "normal", "silent", "skip", "error")
+follow_imports = "normal"
+
+# Enable type checks also in functions without type hints
+check_untyped_defs = true
+# Enable warnings if function returns 'Any' instead of specific type
+warn_return_any = true
+
+### Strict settings ###
+# ================== #
+
+# Enable to enforce that all functions include type hints
+disallow_untyped_defs = true
+# Prevent type 'Any' from imported modules that don't have type stubs
+disallow_any_unimported = false
+# Don't allow expressions that result in 'Any' type
+disallow_any_expr = false
+# Don't allow decorators to return type 'Any'
+disallow_any_decorated = true
+# Prevent using explicit type hint 'Any'
+disallow_any_explicit = true
+# Prevent inheritance of classes with type 'Any'
+disallow_subclassing_any = true
+# Warn if a stub file has missing type hints
+warn_incomplete_stub = true
+# Warn if unnecessary type casts are used
 warn_redundant_casts = true
-disallow_untyped_defs = true  # REQUIRE type hints on all functions
+# Warn if unnecessary type ignore is detected
+warn_unused_ignores = true
+# Prevent 'Any' type in generics (list, dict, etc.)
+disallow_any_generics = true
+# Prevent calling untyped functions
 disallow_untyped_calls = true
-disallow_untyped_decorators = true
+# Prevents implicit optional types e.g., when using None as default for specific types
+no_implicit_optional = true
 
-# Practical settings for data science
-ignore_missing_imports = true
+### Error reporting ###
+# =================== #
+
+# Show error codes in addition to error message
 show_error_codes = true
+# Show column numbers in addition to line numbers
+show_column_numbers = true
+# Show line of code along with the error message
+show_error_context = true
+# Pretty print message (including indentation, arrows, etc.)
+pretty = true
+# Use colors in output message
+color_output = true
+# Show a summary at the end
+error_summary = true
 
-# Files to check
-files = [
-    "src/**/*.py",
-    "tests/**/*.py",
+### Per module settings ###
+# ======================= #
+
+
+##############
+### bandit ###
+##############
+[tool.bandit]
+# Exclude non-productive code (e.g., tests)
+exclude_dirs = [
+    "tests",
 ]
 
-# ========== PYLINT DESIGN CONFIG ==========
-[tool.pylint.'DESIGN']
-# Industry standard thresholds
-max-args = 7           # Functions should have ≤7 parameters
-max-locals = 15        # Functions should have ≤15 local variables  
-max-returns = 6        # Functions should have ≤6 return points
-max-branches = 12      # Functions should have ≤12 branches
-max-statements = 50    # Functions should have ≤50 statements
-max-attributes = 10    # Classes should have ≤10 attributes
-min-public-methods = 1 # Classes should have ≥1 public method
+# Include the following tests
+# tests = []
 
-[tool.pylint.'MESSAGES CONTROL']
-# Essential checks to disable
-disable = [
-    # Design - these are covered by Ruff's complexity checks
-    "too-many-arguments",
-    "too-many-locals",
-    "too-many-branches",
-    "too-many-statements",
-    "too-few-public-methods",
-    
-    # False positives in data science
-    "no-self-use",      # Methods might be public API
-    "attribute-defined-outside-init",  # Common in ML setup
+# Skip the following tests
+skips = []
+
+# Recursively check all files
+recursive = true
+
+# Define keywords to identify hardcoded passwords/secrets
+[tool.bandit.hardcoded_password_string]
+word_list = [
+    "password",
+    "passwd",
+    "pwd",
+    "key",
+    "secret",
+    "token",
+    "api_key",
+    "apikey",
+    "access_token",
 ]
 
-# Enable valuable checks
-enable = [
-    "useless-return",       # Detect unnecessary return None
-    "using-constant-test",  # if True/False/None
-    "unnecessary-pass",     # Empty blocks
-]
+# Define thresholds for weak crypto keys
+[tool.bandit.weak_cryptographic_key]
+weak_key_size_rsa_high = 2048
+weak_key_size_rsa_medium = 3072
+weak_key_size_ec_high = 224
+weak_key_size_ec_medium = 256
 
-[tool.pylint.'BASIC']
-# Good variable names (industry conventions)
-good-names = [
-    # Single letters for math/physics
-    "i", "j", "k", "m", "n",  # indices/counts
-    "x", "y", "z",            # coordinates
-    "t",                      # time
-    "f", "g", "h",            # functions in math
-    "v",                      # velocity/voltage
-    "ω", "theta", "phi",      # angles
-    
-    # Common abbreviations
-    "df",                     # pandas DataFrame
-    "idx",                    # index
-    "tmp",                    # temporary
-    "msg",                    # message
-    "err",                    # error
-    "cfg",                    # config
-    
-    # Domain specific (PMSM/ML)
-    "i_d", "i_q", "v_d", "v_q",  # motor control
-    "psi", "tau", "omega",       # physics
-    "X_train", "y_pred",         # ML
-]
 
-# ========== PROJECT SPECIFIC ==========
-# Allow slightly more complex patterns in simulation code
-[[tool.mypy.overrides]]
-module = [
-    "src.simulation.*",
-    "src.control.*",
-]
-disallow_untyped_defs = false  # More flexible in simulation code
-
-# Strict typing for ML/core logic
-[[tool.mypy.overrides]]
-module = [
-    "src.ml.*",
-    "src.core.*",
-]
-disallow_untyped_defs = true  # Strict in core logic
-
-# Test files are more flexible
-[[tool.mypy.overrides]]
-module = [
-    "tests.*",
-    "test_*",
-]
-ignore_missing_imports = true
-disallow_untyped_defs = false
+#################
+### pip-audit ###
+#################
+[tool.pip-audit]
+# Ignore the following list of vulnerabilities
+ignore-vulns = []

@@ -1,0 +1,93 @@
+name: Code Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the current code base
+      - uses: actions/checkout@v4
+
+      # Installiert uv, Python und alle Abhängigkeiten ultra-schnell
+      - name: Install uv and sync dependencies
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          # Cache wird automatisch aktiviert
+      
+      - name: Sync dependencies from pyproject.toml
+        # --all-groups installiert 'dependencies' und 'optional-dependencies' (dev)
+        run: uv sync --all-groups
+
+      # Create output folder
+      - name: Prepare output folder
+        run: mkdir -p reports/quality
+
+      # Run Ruff (via uv run)
+      - name: Run Ruff
+        id: ruff
+        # uv run stellt sicher, dass das korrekt installierte Tool genutzt wird
+        run: uv run ruff check . --output-format concise > reports/quality/report_ruff.txt
+        continue-on-error: true
+
+      # Run pylint (via uv run)
+      - name: Run Pylint
+        id: pylint
+        run: uv run pylint . --ignore=.venv --rcfile=pyproject.toml --fail-on R,W,C,E,F > reports/quality/report_pylint.txt
+        continue-on-error: true
+
+      # Run mypy (via uv run)
+      - name: Run mypy
+        id: mypy
+        run: uv run mypy .
+        # WICHTIG: HTML-Report entfernt, da 'lxml' extra installiert werden müsste. 
+        # Die Fehler werden jetzt direkt im CI-Log angezeigt.
+        continue-on-error: true
+
+      # Run Tests (via uv run)
+      - name: Run Tests
+        id: pytest
+        # --cov-report=term: Display the report in the CI logs
+        # --cov-fail-under=80: Fail the step if coverage < 80%
+        run: |
+          uv run pytest --cov=source \
+            --cov-report=term \
+            --cov-report=xml:reports/quality/coverage.xml \
+            --cov-fail-under=95
+        # Optional: Remove continue-on-error if you want it to fail here immediately
+        continue-on-error: true
+
+      # Evaluate individual quality checks
+      - name: Quality Summary
+        run: |
+          echo "Code quality results:"
+          echo "================================"
+          echo "Ruff:   ${{ steps.ruff.outcome }}"
+          echo "Pylint: ${{ steps.pylint.outcome }}"
+          echo "mypy:   ${{ steps.mypy.outcome }}"
+          echo "pytest: ${{ steps.pytest.outcome }}"
+          echo "================================"
+
+          # Check results: Job schlägt fehl, wenn etwas nicht "success" war
+          if [ "${{ steps.ruff.outcome }}" != "success" ] || \
+             [ "${{ steps.pylint.outcome }}" != "success" ] || \
+             [ "${{ steps.mypy.outcome }}" != "success" ] || \
+             [ "${{ steps.pytest.outcome }}" != "success" ]; then
+            echo "::error::❌ Code quality checks failed!"
+            exit 1
+          fi
+
+          echo "::notice::✅ Code quality checks successful!"
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-reports
+          path: reports/quality/

@@ -1,36 +1,34 @@
 {
-    // Python
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-    
-    // Linting
-    "python.linting.enabled": true,
-    "python.linting.lintOnSave": true,
-    "python.linting.ruffEnabled": true,
-    "python.linting.mypyEnabled": true,
-    "python.linting.pylintEnabled": true,
-    
-    // Type checking
-    "python.analysis.typeCheckingMode": "basic",
-    "python.analysis.diagnosticSeverityOverrides": {
-        "reportMissingTypeStubs": "none"
-    },
-    
-    // Formatting (using ruff)
-    "editor.formatOnSave": true,
+    // Use project venv (same as CI)
+    "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+    // Ruff for formatting and linting (uses [tool.ruff] from pyproject.toml)
     "[python]": {
-        "editor.defaultFormatter": "charliermarsh.ruff",
-        "editor.codeActionsOnSave": {
-            "source.fixAll": "always"
-        },
-        "editor.tabSize": 4,
-        "editor.insertSpaces": true
+        "editor.defaultFormatter": "charliermarsh.ruff"
     },
-    
-    // Files
-    "files.exclude": {
-        "**/__pycache__": true,
-        "**/.pytest_cache": true,
-        "**/.mypy_cache": true,
-        "**/.ruff_cache": true
-    }
+    "ruff.enable": true,
+    "ruff.lint.enable": true,
+    "ruff.path": [
+        "${workspaceFolder}\\.venv\\Scripts\\ruff.exe"
+    ],
+    "ruff.configuration": "${workspaceFolder}/pyproject.toml",
+    // mypy (same config as CI)
+    "mypy-type-checker.interpreter": [
+        "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+    ],
+    "mypy-type-checker.args": [
+        "--config-file",
+        "${workspaceFolder}/pyproject.toml"
+    ],
+    "mypy-type-checker.path": [
+        "${workspaceFolder}\\.venv\\Scripts\\mypy.exe"
+    ],
+    // Pylint (same config as CI, uses pyproject.toml as rcfile)
+    "pylint.importStrategy": "fromEnvironment",
+    "pylint.path": [
+        "${workspaceFolder}\\.venv\\Scripts\\pylint.exe"
+    ],
+    "pylint.args": [
+        "--rcfile",
+        "${workspaceFolder}/pyproject.toml"
+    ]
 }
