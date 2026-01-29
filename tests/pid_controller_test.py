@@ -3,7 +3,6 @@
 import pytest
 from pid_controller import PIDController
 
-# Use pytest fixtures to create a fresh controller instance for each test
 @pytest.fixture
 def pid_controller() -> PIDController:
     """Fixture that provides a default PID controller instance."""

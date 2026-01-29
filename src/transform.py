@@ -71,11 +71,4 @@ class ClarkeParkTransform:
         Returns:
             tuple: (alpha, beta) components in stationary frame.
         """
-        # Inverse transformation matrix
-        cos_theta = cos(theta)
-        sin_theta = sin(theta)
-
-        alpha = d * cos_theta - q * sin_theta
-        beta = d * sin_theta + q * cos_theta
-
-        return alpha, beta
+        return self.park_transform(d, q, -theta)
