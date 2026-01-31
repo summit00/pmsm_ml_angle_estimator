@@ -39,7 +39,7 @@ jobs:
       # Run pylint (via uv run)
       - name: Run Pylint
         id: pylint
-        run: uv run pylint . --ignore=.venv --rcfile=pyproject.toml --fail-on R,W,C,E,F > reports/quality/report_pylint.txt
+        run: uv run pylint src --ignore=.venv --rcfile=pyproject.toml --fail-on R,W,C,E,F > reports/quality/report_pylint.txt
         continue-on-error: true
 
       # Run mypy (via uv run)

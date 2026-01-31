@@ -103,7 +103,8 @@ py-version = "3.12"
 # Execute X jobs in parallel (0=auto detect)
 jobs = 0
 
-ignore = "tests"  ######################################################## to be removed later.
+ignore = ["tests", ".venv", "build"]  ######################################################## to be removed later.
+ignore-paths = ["tests/.*", ".venv/.*", "build/.*"]  ######################################################## to be removed later.
 
 [tool.pylint.reports]
 # Generate reports
