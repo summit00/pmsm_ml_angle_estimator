@@ -30,5 +30,7 @@
     "pylint.args": [
         "--rcfile",
         "${workspaceFolder}/pyproject.toml"
-    ]
+    ],
+    // Add the extra path for Pylance analysis
+    "python.analysis.extraPaths": ["src"]
 }

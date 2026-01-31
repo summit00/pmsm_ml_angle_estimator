@@ -23,6 +23,19 @@ dependencies = [
 # This line tells pytest to add the "src" directory to the Python path
 pythonpath = ["src"]
 
+[tool.uv]
+package = true
+
+# --- Add this section for coverage configuration ---
+[tool.coverage.run]
+branch = true # Optional: enable branch coverage
+# Specify which files to include for coverage analysis
+source = ["src"] 
+# Specify which files/folders inside the source to ignore
+omit = [
+    "src/pmsm_plotter.py",
+]
+
 
 
 ################

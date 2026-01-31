@@ -1,2 +1,7 @@
 __pycache__/
 .venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+src/pmsm_ml_angle_estimator.egg-info/

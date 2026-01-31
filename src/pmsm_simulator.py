@@ -63,6 +63,8 @@ class PmsmFocSimulator:
         v_alpha, v_beta = 0.0, 0.0
         i_alpha, i_beta = 0.0, 0.0
 
+        omega_ref_ramped = 0.0
+
         # Track last update times
         last_current_update = -dt_current
         last_speed_update = -dt_speed
