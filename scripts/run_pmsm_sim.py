@@ -8,9 +8,8 @@ from foc_controller import FocCurrentController
 from pmsm_plant import PmsmPlant
 from pmsm_plotter import plot_pmsm_results
 from pmsm_simulator import PmsmFocSimulator
-from speed_controller import SpeedController
 from profile_generators import generate_random_speed_profile, generate_random_torque_profile
-
+from speed_controller import SpeedController
 
 
 def main() -> None:

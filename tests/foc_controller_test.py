@@ -1,8 +1,10 @@
 """"Unit tests for the FocCurrentController class."""
 
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pytest
-from unittest.mock import MagicMock, patch
+
 from foc_controller import FocCurrentController
 
 
@@ -111,7 +113,7 @@ def test_step_voltage_limiting(mock_pid_controller_class: MagicMock) -> None:
     ctrl = FocCurrentController(dt=0.001, v_limit=10.0)
     # Configure PIDs to return large values that *exceed* the limit
     # e.g. magnitude will be sqrt(100^2 + 0^2) = 100V
-    mock_pid_controller_class.return_value.update.side_effect = [100.0, 0.0] 
+    mock_pid_controller_class.return_value.update.side_effect = [100.0, 0.0]
 
     v_d, v_q = ctrl.step(0.0, 0.0, 0.0, 0.0, omega_e=0.0)
     v_mag_actual = np.sqrt(v_d**2 + v_q**2)

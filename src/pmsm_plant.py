@@ -1,5 +1,7 @@
 """PMSM plant model implementation."""
 
+from collections.abc import Callable
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -27,8 +29,8 @@ class PmsmPlant:
         p: int=3,
         j: float=0.01,
         b: float=0.001,
-        load_torque_func=None,
-    ):
+        load_torque_func: Callable[[float], float] | None = None,
+        ):
         """Initialize PMSM plant model."""
         # Electrical parameter_s
         self.r_s = r_s
@@ -41,11 +43,13 @@ class PmsmPlant:
         self.j = j
         self.b = b
 
-        # Load torque function (default: zero torque).
-        if load_torque_func is None:
-            self.load_torque_func = lambda t: 0.0
-        else:
-            self.load_torque_func = load_torque_func
+        self.load_torque_func = load_torque_func or (lambda _: 0.0)
+
+        # # Load torque function (default: zero torque).
+        # if load_torque_func is None:
+        #     self.load_torque_func = lambda t: 0.0
+        # else:
+        #     self.load_torque_func = load_torque_func
 
     def ode(self, t: float, x: NDArray[np.float64], u: NDArray[np.float64]) -> NDArray[np.float64]:
         """Compute the state derivatives.
@@ -82,7 +86,7 @@ class PmsmPlant:
         # Return state derivatives
         return np.array([di_d_dt, di_q_dt, dtheta_m_dt, domega_m_dt])
 
-    def output(self, t: float, x: NDArray[np.float64]):
+    def output(self, t: float, x: NDArray[np.float64]) -> dict[str, float]:
         """Compute and return all relevant outputs for logging and analysis.
 
         Args:

@@ -1,5 +1,8 @@
-import numpy as np
+"""Profile generators for PMSM simulation."""
 from collections.abc import Callable
+
+import numpy as np
+
 
 def generate_random_torque_profile(
     duration: float = 2.5,

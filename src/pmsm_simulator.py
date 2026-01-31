@@ -3,6 +3,7 @@ from collections.abc import Callable, Sequence
 
 import numpy as np
 import pandas as pd
+
 from foc_controller import FocCurrentController
 from pmsm_plant import PmsmPlant
 from ramp_gen import SimpleRamp
@@ -35,7 +36,7 @@ class PmsmFocSimulator:
         self.dt_current = dt_current
         self.dt_speed = dt_speed
         self.t_final = t_final
-        self.omega_ref_func = omega_ref_func
+        self.omega_ref_func = omega_ref_func or (lambda _: 0.0)
         self.ramp_rate = ramp_rate
 
         if x0 is None:

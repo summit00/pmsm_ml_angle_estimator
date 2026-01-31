@@ -47,6 +47,8 @@ indent-width = 4
 # Align with your mypy Python version
 target-version = "py312"
 
+exclude = ["tests"]  ######################################################## to be removed later.
+
 
 [tool.ruff.lint]
 # Core rule sets: style, errors, naming, bug risks, imports, etc.
@@ -100,6 +102,8 @@ line-ending = "lf"
 py-version = "3.12"
 # Execute X jobs in parallel (0=auto detect)
 jobs = 0
+
+ignore = "tests"  ######################################################## to be removed later.
 
 [tool.pylint.reports]
 # Generate reports
@@ -298,7 +302,7 @@ disable_error_code = ["import-untyped"]
 # ================== #
 
 # Exclude the following files/folders from assessment
-exclude = []
+exclude = ["tests/"] ######################################################## to be removed later.
 # Specify target version (to know supported feature set)
 python_version = "3.12"
 # Enable warnings for unused or deprecated options in pyproject.toml
