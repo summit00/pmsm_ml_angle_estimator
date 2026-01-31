@@ -62,7 +62,7 @@ class PmsmPlant:
         Returns:
             dx/dt: Derivative of state vector
         """
-        i_d, i_q, theta_m, omega_m = x
+        i_d, i_q, theta_m, omega_m = x # pylint: disable=unused-variable
         v_d, v_q = u
 
         # electrical speed [rad/s]
